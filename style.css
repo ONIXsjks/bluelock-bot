@@ -1,72 +1,217 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
 
 body {
     font-family: -apple-system, sans-serif;
-    background: linear-gradient(135deg, #0a1929 0%, #1a3a5c 100%);
+    background: #000;
     color: white;
     min-height: 100vh;
-    padding: 20px;
+    overflow: hidden;
 }
 
-#app { max-width: 500px; margin: 0 auto; }
-
-header { text-align: center; margin-bottom: 20px; }
-
-h1 { font-size: 28px; color: #4da6ff; text-shadow: 0 0 10px #4da6ff; }
-h2 { font-size: 18px; margin-bottom: 15px; color: #a8d5ff; }
-
-.screen { display: none; }
-.screen.active { display: block; }
-
-.chars-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+#app {
+    max-width: 500px;
+    margin: 0 auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #0a1929;
 }
 
-.char-card {
-    background: rgba(77, 166, 255, 0.15);
-    border: 2px solid #4da6ff;
-    border-radius: 12px;
-    padding: 15px;
+/* هدر */
+header {
+    padding: 10px;
     text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
+    background: rgba(0, 0, 0, 0.5);
+    border-bottom: 2px solid #4da6ff;
 }
 
-.char-card:hover {
-    transform: scale(1.05);
-    background: rgba(77, 166, 255, 0.3);
-    box-shadow: 0 0 20px #4da6ff;
+h1 { font-size: 18px; color: #4da6ff; text-shadow: 0 0 10px #4da6ff; }
+
+.hud {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 14px;
+    font-weight: bold;
 }
 
-.char-card .emoji { font-size: 40px; display: block; }
-.char-card .name { font-size: 14px; margin-top: 5px; font-weight: bold; }
+.score { color: #fff; }
+.timer { color: #4da6ff; }
 
-button {
-    display: block;
+/* زمین بازی */
+#game-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.sky {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 25%;
+    background: linear-gradient(180deg, #0a1929 0%, #1a3a5c 100%);
+}
+
+.field {
+    position: absolute;
+    top: 25%;
+    left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, #2a7a3a 0%, #1d6630 40%, #1a5c2a 100%);
+    perspective: 800px;
+}
+
+/* خطوط افقی چمن */
+.field::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        180deg,
+        transparent 0px,
+        transparent 40px,
+        rgba(255, 255, 255, 0.08) 40px,
+        rgba(255, 255, 255, 0.08) 42px
+    );
+}
+
+/* دروازه حریف (دور، بالا) */
+.goal-enemy {
+    position: absolute;
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 45%;
+    height: 40px;
+    z-index: 5;
+}
+
+.goal-net {
     width: 100%;
-    padding: 15px;
-    margin: 10px 0;
-    background: #4da6ff;
-    color: white;
+    height: 100%;
+    border: 2px solid #fff;
+    border-top: none;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 6px,
+        rgba(255, 255, 255, 0.3) 6px,
+        rgba(255, 255, 255, 0.3) 7px
+    );
+    border-radius: 0 0 4px 4px;
+}
+
+.goalkeeper {
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 22px;
+}
+
+/* حریف */
+.enemy-player {
+    position: absolute;
+    font-size: 40px;
+    transition: all 0.4s ease;
+    z-index: 8;
+    filter: drop-shadow(0 0 8px #ff4d4d);
+}
+
+/* توپ */
+.ball {
+    position: absolute;
+    font-size: 28px;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 10;
+    filter: drop-shadow(0 0 10px #fff);
+}
+
+/* بازیکن من (پایین، بزرگ) */
+.my-player {
+    position: absolute;
+    font-size: 60px;
+    transition: all 0.4s ease;
+    z-index: 15;
+    filter: drop-shadow(0 0 15px #4da6ff);
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* دکمه‌ها */
+.controls {
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    border-top: 2px solid #4da6ff;
+}
+
+.move-row, .action-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.move-row button { flex: 1; }
+
+.controls button {
+    padding: 14px;
+    font-size: 18px;
+    font-weight: bold;
     border: none;
     border-radius: 12px;
-    font-size: 16px;
-    font-weight: bold;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.15s;
+    color: white;
 }
 
-button:hover { background: #2d8ae0; transform: scale(1.02); }
+.btn-move {
+    background: #2d5a8c;
+    font-size: 22px;
+}
 
-#result-text {
-    background: rgba(0,0,0,0.3);
-    padding: 15px;
-    border-radius: 12px;
-    font-family: monospace;
-    font-size: 13px;
-    line-height: 1.8;
-    white-space: pre-wrap;
-    margin-bottom: 15px;
+.btn-move:active {
+    transform: scale(0.9);
+    background: #4da6ff;
+}
+
+.btn-action {
+    flex: 1;
+    padding: 16px;
+    font-size: 16px;
+}
+
+.btn-shoot { background: linear-gradient(135deg, #ff6b35, #ff4757); }
+.btn-dribble { background: linear-gradient(135deg, #4da6ff, #2d8ae0); }
+
+.btn-action:active { transform: scale(0.95); }
+
+/* انیمیشن گل */
+@keyframes goalPop {
+    0% { transform: translateX(-50%) scale(0); opacity: 0; }
+    50% { transform: translateX(-50%) scale(1.3); opacity: 1; }
+    100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+.goal-text {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 48px;
+    font-weight: bold;
+    color: gold;
+    text-shadow: 0 0 20px gold, 0 0 40px orange;
+    animation: goalPop 0.6s ease;
+    z-index: 100;
+}
+
+/* انیمیشن شوت */
+@keyframes shootAnim {
+    0% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.2) rotate(-10deg); }
+    100% { transform: translateX(-50%) scale(1); }
+}
+
+.my-player.shooting {
+    animation: shootAnim 0.3s ease;
 }
